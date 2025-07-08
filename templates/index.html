@@ -150,6 +150,30 @@
       border-radius: 12px;
       padding: 1rem;
     }
+
+    @media (max-width: 768px) {
+      body {
+        flex-direction: column;
+        align-items: center;
+      padding: 1rem;
+    } 
+
+    .container,
+    .right-panel {
+      max-width: 100%;
+      width: 90%;
+    }
+
+    .right-panel {
+      margin-top: 2rem;
+    }
+
+    canvas {
+      width: 100% !important;
+      height: auto !important;
+    }
+  }
+  
   </style>
 </head>
 <body>
