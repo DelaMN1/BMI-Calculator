@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>BMI Calculator</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      background-color: #393d41;
+      font-family: 'Segoe UI', sans-serif;
+      color: #2e3e9c;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 2rem;
+      gap: 2rem;
+    }
+
+    .container {
+      background: #1a1a2e;
+      padding: 2rem;
+      border-radius: 15px;
+      box-shadow: 0 0 5px rgba(0, 123, 255, 0.6);
+      width: 100%;
+      max-width: 400px;
+    }
+
+    h1 {
+      text-align: center;
+      color: #00bfff;
+      margin-bottom: 1rem;
+    }
+
+    label {
+      display: block;
+      margin: 0.8rem 0 0.3rem;
+      color: #ddd;
+    }
+
+    input[type="number"] {
+      width: 100%;
+      padding: 0.6rem;
+      border: none;
+      border-radius: 10px;
+      background-color: #333;
+      color: #fff;
+      font-size: 1rem;
+    }
+
+    button {
+      width: 100%;
+      padding: 0.7rem;
+      margin-top: 1rem;
+      background-color: #007bff;
+      border: none;
+      border-radius: 10px;
+      color: #fff;
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    .result {
+      margin-top: 1rem;
+      text-align: center;
+      font-size: 1.2rem;
+      padding: 1rem;
+      border-radius: 10px;
+      transition: all 0.3s ease-in-out;
+    }
+
+    .result.underweight {
+      background-color: #0044cc;
+      color: white;
+    }
+
+    .result.normal {
+      background-color: #00cc66;
+      color: white;
+    }
+
+    .result.overweight {
+      background-color: #e94d10e7;
+      color: black;
+    }
+
+    .result.obese {
+      background-color: #cc0000;
+      color: white;
+    }
+
+    .bmi-scale {
+      margin-top: 2rem;
+      position: relative;
+    }
+
+    .scale-bar {
+      display: flex;
+      width: 100%;
+      height: 30px;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 0 5px #444;
+    }
+
+    .range {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 0.7rem;
+      font-weight: bold;
+      color: #fff;
+    }
+
+    .range.underweight { background-color: #0044cc; }
+    .range.normal { background-color: #00cc66; }
+    .range.overweight { background-color: #e94d10e7; color: #000; }
+    .range.obese { background-color: #cc0000; }
+
+    #bmi-marker {
+      position: absolute;
+      top: 30px;
+      left: 0;
+      transform: translateX(-50%);
+      color: #00ffff;
+      font-size: 1.5rem;
+      transition: left 0.4s ease-in-out;
+      text-shadow: 0 0 5px #00ffff;
+    }
+
+    .right-panel {
+      flex: 1;
+      background: #ffffff0a;
+      padding: 2rem;
+      border-radius: 15px;
+      box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+      max-width: 500px;
+      color: #fff;
+    }
+
+    canvas {
+      margin-top: 2rem;
+      background: #0e0e1c;
+      border-radius: 12px;
+      padding: 1rem;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>BMI Calculator</h1>
+    <label for="unit">Unit System:</label>
+    <select id="unit" onchange="toggleUnits()">
+      <option value="metric">Metric (kg, m)</option>
+      <option value="imperial">Imperial (lbs, ft+in)</option>
+    </select>
+
+    <label for="weight">Weight:</label>
+    <input type="number" id="weight" placeholder="e.g. 70" />
+
+    <div id="metric-height">
+      <label for="height">Height (m):</label>
+      <input type="number" id="height" placeholder="e.g. 1.75" />
+    </div>
+
+    <div id="imperial-height" style="display: none;">
+      <label for="height-ft">Height:</label>
+      <div style="display: flex; gap: 10px;">
+        <input type="number" id="height-ft" placeholder="feet" />
+        <input type="number" id="height-in" placeholder="inches" />
+      </div>
+    </div>
+
+    <button onclick="calculateBMI()">Calculate BMI</button>
+    <button onclick="resetForm()" style="background-color: #dc3545;">Reset</button>
+    <div class="result" id="result"></div>
+
+    <div class="bmi-scale">
+      <div class="scale-bar">
+        <div class="range underweight">Underweight</div>
+        <div class="range normal">Normal</div>
+        <div class="range overweight">Overweight</div>
+        <div class="range obese">Obese</div>
+      </div>
+      <div id="bmi-marker">▼</div>
+    </div>
+  </div>
+
+  <div class="right-panel">
+    <h2>Health Advice</h2>
+    <p id="advice">Your health advice will appear here after calculation.</p>
+
+    <canvas id="bmiChart" height="200"></canvas>
+    <button onclick="resetChart()" style="margin-top: 1rem; background-color: #dc3545;">Reset Chart</button>
+  </div>
+
+  <script>
+    function toggleUnits() {
+      const unit = document.getElementById('unit').value;
+      document.getElementById('metric-height').style.display = unit === 'metric' ? 'block' : 'none';
+      document.getElementById('imperial-height').style.display = unit === 'imperial' ? 'block' : 'none';
+    }
+
+    let bmiChart = new Chart(document.getElementById('bmiChart'), {
+      type: 'line',
+      data: {
+        labels: [],
+        datasets: [{
+          label: 'BMI Over Time',
+          data: [],
+          borderColor: '#00bfff',
+          backgroundColor: 'transparent',
+          borderWidth: 2,
+          tension: 0.3
+        }]
+      },
+      options: {
+        scales: {
+          y: {
+            beginAtZero: false,
+            suggestedMin: 10,
+            suggestedMax: 40
+          }
+        }
+      }
+    });
+
+    async function calculateBMI() {
+      const unit = document.getElementById('unit').value;
+      const weight = parseFloat(document.getElementById('weight').value);
+      let height;
+
+      if (unit === 'metric') {
+        height = parseFloat(document.getElementById('height').value);
+        if (!weight || !height) {
+          document.getElementById('result').innerText = "Please enter both height and weight.";
+          return;
+        }
+      } else {
+        const feet = parseFloat(document.getElementById('height-ft').value) || 0;
+        const inches = parseFloat(document.getElementById('height-in').value) || 0;
+        height = (feet * 12) + inches;
+        if (!weight || height === 0) {
+          document.getElementById('result').innerText = "Please enter both height (ft & in) and weight.";
+          return;
+        }
+      }
+
+      try {
+        const response = await fetch('/calculate_bmi', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ weight, height, unit })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          const resultDiv = document.getElementById('result');
+          resultDiv.className = 'result';
+
+          let statusClass = '';
+          switch (data.status.toLowerCase()) {
+            case 'underweight':
+              statusClass = 'underweight';
+              break;
+            case 'normal':
+              statusClass = 'normal';
+              break;
+            case 'overweight':
+              statusClass = 'overweight';
+              break;
+            case 'obese':
+              statusClass = 'obese';
+              break;
+          }
+          resultDiv.classList.add(statusClass);
+          resultDiv.innerText = `Your BMI is ${data.bmi.toFixed(2)} – ${data.status}`;
+
+          // Scale marker
+          const minBMI = 10, maxBMI = 40;
+          const markerLeft = ((Math.min(Math.max(data.bmi, minBMI), maxBMI) - minBMI) / (maxBMI - minBMI)) * 100;
+          document.getElementById('bmi-marker').style.left = `${markerLeft}%`;
+
+          // Health advice
+          let adviceText = '';
+          switch (data.status.toLowerCase()) {
+            case 'underweight':
+              adviceText = "Consider eating nutrient-rich foods and talking to a nutritionist.";
+              break;
+            case 'normal':
+              adviceText = "Great job! Keep maintaining your healthy lifestyle.";
+              break;
+            case 'overweight':
+              adviceText = "Incorporate more exercise and healthier meals into your routine.";
+              break;
+            case 'obese':
+              adviceText = "Please consult a doctor or dietitian for a tailored health plan.";
+              break;
+          }
+          document.getElementById('advice').innerText = adviceText;
+
+          // Add to chart
+          const now = new Date();
+          const timestamp = now.toLocaleTimeString();
+          bmiChart.data.labels.push(timestamp);
+          bmiChart.data.datasets[0].data.push(data.bmi);
+          bmiChart.update();
+        }
+      } catch {
+        document.getElementById('result').innerText = "Failed to connect to server.";
+      }
+    }
+
+    function resetForm() {
+      document.getElementById('unit').value = 'metric';
+      document.getElementById('weight').value = '';
+      document.getElementById('height').value = '';
+      document.getElementById('height-ft').value = '';
+      document.getElementById('height-in').value = '';
+      toggleUnits();
+      const resultDiv = document.getElementById('result');
+      resultDiv.innerText = '';
+      resultDiv.className = 'result';
+      document.getElementById('advice').innerText = 'Your health advice will appear here after calculation.';
+      document.getElementById('bmi-marker').style.left = `0%`;
+    }
+
+    function resetChart() {
+      if (bmiChart) {
+        bmiChart.data.labels = [];
+        bmiChart.data.datasets[0].data = [];
+        bmiChart.update();
+      }
+    }
+  </script>
+</body>
+</html>
