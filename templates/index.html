@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>BMI Calculator</title>
   <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
@@ -196,7 +197,7 @@
       transform: translateX(-50%);
       color: var(--primary);
       font-size: 1.5rem;
-      transition: left var(--transition);
+      transition: left 0.7s cubic-bezier(.4,0,.2,1); /* Smooth slide */
       text-shadow: 0 0 6px #3bb2d650;
       pointer-events: none;
     }
@@ -285,22 +286,34 @@
     <form class="card" id="bmi-form" onsubmit="event.preventDefault(); calculateBMI();">
       <h1>BMI Calculator</h1>
       <div class="input-group">
-        <label for="unit">Unit System</label>
+        <label for="unit">
+          <i class="fa-solid fa-ruler-combined" style="margin-right:0.3em; color:#3b82f6;"></i>
+          Unit System
+        </label>
         <select id="unit" onchange="toggleUnits()" aria-label="Unit system">
           <option value="metric">Metric (kg, m)</option>
           <option value="imperial">Imperial (lbs, ft+in)</option>
         </select>
       </div>
       <div class="input-group">
-        <label for="weight">Weight</label>
+        <label for="weight">
+          <i class="fa-solid fa-weight-scale" style="margin-right:0.3em; color:#f59e42;"></i>
+          Weight
+        </label>
         <input type="number" id="weight" placeholder="e.g. 70" min="1" step="any" aria-label="Weight" />
       </div>
       <div class="input-group" id="metric-height">
-        <label for="height">Height (m)</label>
+        <label for="height">
+          <i class="fa-solid fa-ruler-vertical" style="margin-right:0.3em; color:#22c55e;"></i>
+          Height (m)
+        </label>
         <input type="number" id="height" placeholder="e.g. 1.75" min="0.1" step="any" aria-label="Height in meters" />
       </div>
       <div class="input-group" id="imperial-height" style="display: none;">
-        <label for="height-ft">Height</label>
+        <label for="height-ft">
+          <i class="fa-solid fa-ruler-vertical" style="margin-right:0.3em; color:#22c55e;"></i>
+          Height
+        </label>
         <div class="input-row">
           <input type="number" id="height-ft" placeholder="feet" min="0" step="1" aria-label="Height in feet" />
           <input type="number" id="height-in" placeholder="inches" min="0" step="any" aria-label="Height in inches" />
@@ -308,7 +321,17 @@
       </div>
       <button type="submit">Calculate BMI</button>
       <button type="button" class="secondary" onclick="resetForm()">Reset</button>
-      <div class="result-card" id="result"></div>
+      <div class="result-card" id="result">
+        <span id="empty-illustration" style="display:block;">
+          <svg width="60" height="60" viewBox="0 0 60 60" fill="none" style="display:block;margin:0 auto 0.5em auto;">
+            <ellipse cx="30" cy="50" rx="18" ry="5" fill="#f2f3f5"/>
+            <rect x="18" y="18" width="24" height="24" rx="12" fill="#bfc2c5"/>
+            <rect x="25" y="10" width="10" height="18" rx="5" fill="#888a8c"/>
+            <rect x="27" y="36" width="6" height="8" rx="3" fill="#888a8c"/>
+          </svg>
+          <span style="color:#888a8c;font-size:1.05rem;">No BMI calculated yet</span>
+        </span>
+      </div>
       <div class="bmi-scale">
         <div class="scale-bar">
           <div class="range underweight">Underweight</div>
@@ -412,25 +435,30 @@
           // Health advice
           let adviceText = '';
           let adviceIcon = '💡';
+          let adviceLink = '';
           switch (data.status.toLowerCase()) {
             case 'underweight':
-              adviceText = "Consider eating nutrient-rich foods and talking to a nutritionist.";
+              adviceText = `Being underweight can affect your immune system and energy levels. Consider eating nutrient-rich foods, increasing healthy calorie intake, and consulting a nutritionist for a tailored plan.`;
               adviceIcon = '🍽️';
+              adviceLink = '<a href="https://www.cdc.gov/nutrition/strategies-guidelines/index.html" target="_blank" rel="noopener" style="color:#3b82f6;text-decoration:underline;margin-left:0.5em;font-size:0.98em;">Learn more</a>';
               break;
             case 'normal':
-              adviceText = "Great job! Keep maintaining your healthy lifestyle.";
+              adviceText = `Great job! Maintaining a healthy BMI reduces your risk of chronic diseases. Keep up regular physical activity, balanced nutrition, and routine health checkups.`;
               adviceIcon = '🏃‍♂️';
+              adviceLink = '<a href="https://www.cdc.gov/healthyweight/assessing/bmi/adult_bmi/index.html" target="_blank" rel="noopener" style="color:#3b82f6;text-decoration:underline;margin-left:0.5em;font-size:0.98em;">Learn more</a>';
               break;
             case 'overweight':
-              adviceText = "Incorporate more exercise and healthier meals into your routine.";
+              adviceText = `Consider increasing your daily physical activity and choosing nutrient-dense foods. Aim for at least 150 minutes of moderate exercise per week, and focus on whole grains, fruits, and vegetables. Small, sustainable changes can make a big difference.`;
               adviceIcon = '🥗';
+              adviceLink = '<a href="https://www.cdc.gov/healthyweight/losing_weight/index.html" target="_blank" rel="noopener" style="color:#3b82f6;text-decoration:underline;margin-left:0.5em;font-size:0.98em;">Learn more</a>';
               break;
             case 'obese':
-              adviceText = "Please consult a doctor or dietitian for a tailored health plan.";
+              adviceText = `A high BMI can increase your risk for serious health conditions. Please consult a doctor or dietitian for a tailored health plan. Focus on gradual, healthy weight loss and regular checkups.`;
               adviceIcon = '🩺';
+              adviceLink = '<a href="https://www.who.int/news-room/fact-sheets/detail/obesity-and-overweight" target="_blank" rel="noopener" style="color:#3b82f6;text-decoration:underline;margin-left:0.5em;font-size:0.98em;">Learn more</a>';
               break;
           }
-          document.getElementById('advice').innerHTML = `<span class="advice-icon">${adviceIcon}</span> ${adviceText}`;
+          document.getElementById('advice').innerHTML = `<span class="advice-icon">${adviceIcon}</span> ${adviceText} ${adviceLink}`;
           // Add to chart
           const now = new Date();
           const timestamp = now.toLocaleTimeString();
@@ -444,9 +472,11 @@
     }
     function showResult(text, statusClass) {
       const resultDiv = document.getElementById('result');
+      const emptyIll = document.getElementById('empty-illustration');
       resultDiv.className = 'result-card';
       if (statusClass) resultDiv.classList.add(statusClass);
       resultDiv.innerText = text;
+      if (emptyIll) emptyIll.style.display = 'none';
       setTimeout(() => {
         resultDiv.classList.add('visible');
       }, 30);
@@ -463,6 +493,9 @@
       resultDiv.className = 'result-card';
       document.getElementById('advice').innerHTML = '<span class="advice-icon">💡</span> Your health advice will appear here after calculation.';
       document.getElementById('bmi-marker').style.left = `0%`;
+      // Show empty state illustration
+      let emptyIll = document.getElementById('empty-illustration');
+      if (emptyIll) emptyIll.style.display = 'block';
     }
     function resetChart() {
       if (bmiChart) {
